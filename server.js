@@ -11,9 +11,11 @@ const server = http.createServer(app)
 app.use(express.json())
 app.use(cors(
     {
-        origin: ['http://localhost:5173','http://localhost:5174']
+        origin: ['http://localhost:5173','http://localhost:5174', 'https://wassupchat.netlify.app']
     }
 ))
+
+// ftp password = wassupchat.netlify.app
 
 app.use(fileUpload())
 app.use(express.static('public'))
