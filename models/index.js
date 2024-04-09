@@ -13,6 +13,17 @@ sequelize.authenticate()
 const db = {}
 db.sequelize = sequelize
 db.Sequelize = Sequelize
+
+
 db.users =require("./userModel")(sequelize, DataTypes)
+db.rooms = require("./room")(sequelize, DataTypes)
+db.messages = require("./message")(sequelize, DataTypes)
+
 db.sequelize.sync({force : false}).then(() => console.log("db tables synced successfully"))
+
+db.users.hasMany(db.rooms, {foreignKey: 'reciever', as: 'friend'})
+
+
+db.rooms.belongsTo(db.users, {foreignKey: 'reciever', as: 'friend'})
+
 module.exports = db
