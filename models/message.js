@@ -4,5 +4,6 @@ module.exports = (sequelize, DataTypes) => {
         content: {type: DataTypes.TEXT},
         media: {type: DataTypes.STRING, allowNull: true},
         status: {type: DataTypes.STRING, allowNull: true},
+        sender: {type: DataTypes.INTEGER},
     })
 }

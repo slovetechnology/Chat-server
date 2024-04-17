@@ -1,4 +1,4 @@
-const { CreateACCount, LoginAccount, GetallUsers, getUserProfile, CreateRoom, GetRoomChats } = require('../controllers/UserControllers');
+const { CreateACCount, LoginAccount, GetallUsers, getUserProfile, CreateRoom, GetRoomChats, SendChatMessage } = require('../controllers/UserControllers');
 const { UserMiddleware } = require('../middleware/auth');
 
 const router = require('express').Router();
@@ -10,5 +10,6 @@ router.get('/getuser', UserMiddleware, getUserProfile)
 
 router.post('/create-room', UserMiddleware, CreateRoom)
 router.get('/get-chat-room/:roomid', UserMiddleware, GetRoomChats)
+router.post('/send-chat-message', UserMiddleware, SendChatMessage)
 
 module.exports = router

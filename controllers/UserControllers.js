@@ -1,11 +1,11 @@
 const User = require('../models').users
 const Room = require('../models').rooms
+const Message = require('../models').messages
 const slug = require('slug')
 const fs = require('fs')
-const Sequelize = require('sequelize');
-const Op = Sequelize.Op;
 
 const jwt = require('jsonwebtoken')
+const { Op } = require('sequelize')
 
 exports.CreateACCount = async (req, res) => {
     try {
@@ -50,7 +50,7 @@ exports.LoginAccount = async (req, res) => {
         const user = await User.findOne({ where: { phone } })
         if (!user) return res.json({ status: 400, msg: "Account not found" })
         if (password !== user.password) return res.json({ status: 400, msg: "Invalid Password" })
-        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: "1hr" })
+        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: "24hr" })
         return res.json({ status: 200, msg: 'Logged in successfully', token })
     } catch (error) {
         return res.json({ status: 500, msg: error.message })
@@ -80,8 +80,7 @@ exports.GetallUsers = async (req, res) => {
 }
 exports.getUserProfile = async (req, res) => {
     try {
-        const { id } = req.user
-        const user = await User.findOne({ where: id })
+        const user = await User.findOne({ where: {id: req.user} })
         if (!user) return res.json({ status: 400, msg: "User not found" })
         return res.json({ status: 200, msg: user })
     } catch (error) {
@@ -94,20 +93,25 @@ exports.CreateRoom = async (req, res) => {
         const { reciever } = req.body
         if (!reciever) return res.json({ status: 404, msg: "Incomplete request found" })
         // check if a room exists with the sender and the reciever A - sender to E, E - sender to A
-        let room;
+        let room, stat;
         const getRoom = await Room.findOne({
-            [Op.and]: [
-                { sender: req.user, reciever },
-                { sender: reciever, reciever: req.user }
-            ]
-        })
+            where: {
+                [Op.or]: [
+                    { sender: req.user, reciever: reciever },
+                    { sender: reciever, reciever: req.user }
+                ]
+            }
+        });
+        
         if (!getRoom) {
             room = await Room.create({ sender: req.user, reciever })
+            stat = 'new'
         } else {
             room = getRoom
+            stat = 'exists'
         }
 
-        return res.json({ status: 200, msg: room.id })
+        return res.json({ status: 200, msg: room.id, stat })
     } catch (error) {
         res.json({ status: 500, msg: error.message });
     }
@@ -119,6 +123,9 @@ exports.GetRoomChats = async (req, res) => {
         if (!roomid) return res.json({ status: 404, msg: `provide a room ID` })
         const room = await Room.findOne({
             where: { id: roomid },
+            include: [
+                {model: Message, as: 'messages'}
+            ]
         })
         let friend;
         if(room.sender === req.user) {
@@ -129,11 +136,24 @@ exports.GetRoomChats = async (req, res) => {
         const user = await User.findOne({ where: {id: friend} })
 
         const details = {
-            ...room,
+            ...room.dataValues,
             friend: user
         }
         return res.json({status: 200, msg: details})
     } catch (error) {
         return res.json({ status: 500, msg: `${error}` });
+    }
+}
+
+
+exports.SendChatMessage = async (req, res) => {
+    try {
+        const {content, roomid} = req.body
+        if(!content || !roomid) return res.json({status: 404, msg: `incomplete request found`})
+        await Message.create({roomid, content, sender: req.user})
+
+        return res.json({status: 200})
+    } catch (error) {
+        res.json({status: 500, msg: `${error}`})
     }
 }

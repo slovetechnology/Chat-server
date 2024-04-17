@@ -22,8 +22,10 @@ db.messages = require("./message")(sequelize, DataTypes)
 db.sequelize.sync({force : false}).then(() => console.log("db tables synced successfully"))
 
 db.users.hasMany(db.rooms, {foreignKey: 'reciever', as: 'friend'})
+db.rooms.hasMany(db.messages, {foreignKey: 'roomid', as: 'messages'})
 
 
 db.rooms.belongsTo(db.users, {foreignKey: 'reciever', as: 'friend'})
+db.messages.belongsTo(db.rooms, {foreignKey: 'roomid', as: 'messages'})
 
 module.exports = db
